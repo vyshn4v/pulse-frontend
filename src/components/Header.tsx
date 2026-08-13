@@ -280,7 +280,7 @@ export const Header: React.FC = () => {
       {/* Sticky Mobile Bottom Navigation Bar (Pixel 7 & Mobile Screens) */}
       <nav className="mobile-bottom-bar" aria-label="Mobile quick navigation">
         <NavLink to="/" end className={({ isActive }) => `bottom-bar-item ${isActive ? 'active' : ''}`}>
-          <HomeIcon size={20} />
+          <HomeIcon size={21} />
           <span>Home</span>
         </NavLink>
 
@@ -289,7 +289,7 @@ export const Header: React.FC = () => {
           onClick={(e) => isLocked && e.preventDefault()}
           className={({ isActive }) => `bottom-bar-item ${isActive && !isLocked ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
         >
-          <Activity size={20} />
+          <Activity size={21} />
           <span>Activity</span>
         </NavLink>
 
@@ -298,7 +298,7 @@ export const Header: React.FC = () => {
           onClick={(e) => isLocked && e.preventDefault()}
           className={({ isActive }) => `bottom-bar-item ${isActive && !isLocked ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
         >
-          <Briefcase size={20} />
+          <Briefcase size={21} />
           <span>Jobs</span>
         </NavLink>
 
@@ -307,7 +307,7 @@ export const Header: React.FC = () => {
           onClick={(e) => isLocked && e.preventDefault()}
           className={({ isActive }) => `bottom-bar-item ${isActive && !isLocked ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
         >
-          <Server size={20} />
+          <Server size={21} />
           <span>System</span>
         </NavLink>
 
@@ -317,7 +317,7 @@ export const Header: React.FC = () => {
           aria-label="Open More Modules"
           style={{ background: 'none', border: 'none', cursor: 'pointer' }}
         >
-          <Menu size={20} />
+          <Menu size={21} />
           <span>More</span>
         </button>
       </nav>
