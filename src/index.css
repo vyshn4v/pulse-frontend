@@ -1078,3 +1078,95 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+/* Job Pipeline Horizontal Track & Full View Modal */
+.horizontal-jobs-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 14px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.horizontal-jobs-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-jobs-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.horizontal-jobs-track::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 3px;
+}
+
+.horizontal-jobs-track::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent);
+}
+
+.job-horizontal-card {
+  flex: 0 0 290px;
+  min-width: 270px;
+  max-width: 320px;
+  scroll-snap-align: start;
+  background-color: #12161c;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 140ms ease;
+  box-sizing: border-box;
+}
+
+.job-horizontal-card:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.job-full-view-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 20, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.job-full-view-modal {
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+  overflow-y: auto;
+  animation: modalFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
