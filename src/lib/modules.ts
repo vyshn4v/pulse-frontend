@@ -110,4 +110,14 @@ export const modules: ModuleDef[] = [
     iconName: 'Clock',
     defaultReadout: '21:00 digest active',
   },
+  {
+    id: 'system-monitor',
+    title: 'System Resources',
+    path: '/system-monitor',
+    eyebrow: 'Host Telemetry',
+    phase: 10,
+    description: 'Live server CPU, RAM, Disk, Uptime, and Node runtime streaming via SSE.',
+    iconName: 'Cpu',
+    defaultReadout: 'live SSE host metrics',
+  },
 ];

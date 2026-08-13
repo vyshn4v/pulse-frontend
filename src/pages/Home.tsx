@@ -73,6 +73,12 @@ export const Home: React.FC = () => {
     streak: number;
   }>({ momentumIndex: 0, grade: 'B+', streak: 0 });
   const [brainStats, setBrainStats] = useState<{ score: number; memories: number }>({ score: 0, memories: 0 });
+  const [systemStats, setSystemStats] = useState<{
+    cpu: number;
+    mem: number;
+    uptime: string;
+    cores: number;
+  }>({ cpu: 0, mem: 0, uptime: '', cores: 0 });
 
   useEffect(() => {
     const updateTime = () => {
@@ -203,6 +209,21 @@ export const Home: React.FC = () => {
         }
       })
       .catch(() => {});
+
+    // 9. Fetch live System Monitor stats
+    fetch('/api/system-monitor/stats', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setSystemStats({
+            cpu: data.cpu?.overallUsagePercent || 0,
+            mem: data.memory?.usagePercent || 0,
+            uptime: data.host?.uptimeFormatted || '',
+            cores: data.cpu?.coreCount || 0,
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const getTileReadout = (mod: ModuleDef): string => {
@@ -252,6 +273,11 @@ export const Home: React.FC = () => {
     }
     if (mod.id === 'ai-query') {
       return 'real-time vector RAG · active';
+    }
+    if (mod.id === 'system-monitor') {
+      return systemStats.cores > 0
+        ? `${systemStats.cpu}% CPU · ${systemStats.mem}% RAM · ${systemStats.uptime} uptime`
+        : 'real-time SSE stream · active';
     }
     return mod.defaultReadout;
   };
@@ -392,7 +418,7 @@ export const Home: React.FC = () => {
         {modules.map((mod: ModuleDef) => {
           const IconComp = iconMap[mod.iconName] || Activity;
           const isBrain = mod.id === 'brain';
-          const isBuilt = mod.phase <= 5 || mod.id === 'brain' || mod.id === 'ai-query' || mod.phase <= 9;
+          const isBuilt = mod.phase <= 5 || mod.id === 'brain' || mod.id === 'ai-query' || mod.id === 'app-usage' || mod.id === 'system-monitor' || mod.phase <= 10;
 
           return (
             <Link

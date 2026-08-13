@@ -24,6 +24,7 @@ export const Header: React.FC = () => {
     { to: '/brain', label: 'Brain' },
     { to: '/ai-query', label: 'AI Query' },
     { to: '/app-usage', label: 'Screen Time' },
+    { to: '/system-monitor', label: 'System' },
   ];
 
   return (

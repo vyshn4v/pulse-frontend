@@ -16,6 +16,7 @@ import { Performance } from './pages/Performance';
 import { Brain } from './pages/Brain';
 import { AiQuery } from './pages/AiQuery';
 import { AppUsage } from './pages/AppUsage';
+import { SystemMonitor } from './pages/SystemMonitor';
 import { Placeholder } from './pages/Placeholder';
 import { Login } from './pages/Login';
 
@@ -110,6 +111,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <AppUsage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="system-monitor"
+            element={
+              <ProtectedRoute>
+                <SystemMonitor />
               </ProtectedRoute>
             }
           />
