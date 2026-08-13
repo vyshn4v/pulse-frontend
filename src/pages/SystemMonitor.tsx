@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
+  Database,
 } from 'lucide-react';
 
 interface CpuCoreInfo {
@@ -92,6 +93,29 @@ interface NetworkInterfaceInfo {
   mac: string;
 }
 
+export interface ServiceResourceUsage {
+  service: 'postgres' | 'redis';
+  displayName: string;
+  status: 'running' | 'stopped' | 'offline';
+  cpuPercent: number;
+  memoryBytes: number;
+  memoryFormatted: string;
+  memoryPercent: number;
+  details?: {
+    activeConnections?: number;
+    databaseSizeFormatted?: string;
+    usedMemoryRssBytes?: number;
+    usedMemoryPeakFormatted?: string;
+    connectedClients?: number;
+    processCount?: number;
+  };
+}
+
+export interface ServicesMetrics {
+  postgres: ServiceResourceUsage;
+  redis: ServiceResourceUsage;
+}
+
 interface SystemSnapshot {
   timestamp: string;
   host: HostInfo;
@@ -99,6 +123,7 @@ interface SystemSnapshot {
   memory: MemoryMetrics;
   disk: DiskMetrics | null;
   network: NetworkInterfaceInfo[];
+  services?: ServicesMetrics;
   eventLoopLagMs: number;
 }
 
@@ -812,6 +837,26 @@ export const SystemMonitor: React.FC = () => {
         >
           <Server size={15} /> Hardware & Network Specs
         </button>
+
+        <button
+          onClick={() => setActiveTab('services' as any)}
+          style={{
+            background: 'none',
+            border: 'none',
+            borderBottom: (activeTab as any) === 'services' ? '2px solid var(--accent)' : '2px solid transparent',
+            color: (activeTab as any) === 'services' ? 'var(--accent)' : 'var(--text-muted)',
+            padding: '8px 16px',
+            fontSize: '0.88rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            flexShrink: 0,
+          }}
+        >
+          <Database size={15} /> Postgres & Redis RAM/CPU
+        </button>
       </div>
 
       {/* Tab 1: Cores & Storage Breakdown */}
@@ -945,6 +990,362 @@ export const SystemMonitor: React.FC = () => {
                   <span style={{ color: 'var(--accent-2)', fontFamily: 'monospace' }}>{snapshot.disk.freeFormatted}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Database & Redis Services RAM & CPU Section */}
+          {snapshot.services && (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '20px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Database size={17} color="var(--accent)" />
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>
+                      PostgreSQL & Redis Engine Metrics (RAM & CPU)
+                    </h3>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                    Real-time physical memory (Resident Set Size) and CPU usage allocated to database and caching daemons
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                {/* 1. PostgreSQL Database */}
+                <div
+                  style={{
+                    background: '#12161c',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor:
+                            snapshot.services.postgres.status === 'running'
+                              ? 'var(--accent-2, #5fa8a0)'
+                              : 'var(--danger, #d66a5f)',
+                          boxShadow:
+                            snapshot.services.postgres.status === 'running'
+                              ? '0 0 6px var(--accent-2)'
+                              : 'none',
+                        }}
+                      />
+                      <strong style={{ fontSize: '0.92rem' }}>PostgreSQL Database</strong>
+                    </div>
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        background:
+                          snapshot.services.postgres.status === 'running'
+                            ? 'rgba(95, 168, 160, 0.1)'
+                            : 'rgba(214, 106, 95, 0.1)',
+                        color:
+                          snapshot.services.postgres.status === 'running'
+                            ? 'var(--accent-2)'
+                            : 'var(--danger)',
+                        border: '1px solid currentColor',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {snapshot.services.postgres.status}
+                    </span>
+                  </div>
+
+                  {/* RAM and CPU Stat Pair */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ background: 'var(--surface)', padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>RAM (RSS Memory)</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent-2)', marginTop: '2px' }}>
+                        {snapshot.services.postgres.memoryFormatted || '0 B'}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {snapshot.services.postgres.memoryPercent}% of Host RAM
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'var(--surface)', padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>CPU Load</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent)', marginTop: '2px' }}>
+                        {snapshot.services.postgres.cpuPercent}%
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        Across {snapshot.services.postgres.details?.processCount || 1} workers
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sub details */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px' }}>
+                    <span>DB Disk Footprint: <strong style={{ color: 'var(--text-primary)' }}>{snapshot.services.postgres.details?.databaseSizeFormatted || 'N/A'}</strong></span>
+                    <span>Active Conns: <strong style={{ color: 'var(--text-primary)' }}>{snapshot.services.postgres.details?.activeConnections ?? '1'}</strong></span>
+                  </div>
+                </div>
+
+                {/* 2. Redis Cache */}
+                <div
+                  style={{
+                    background: '#12161c',
+                    border: '1px solid var(--border)',
+                    borderRadius: '6px',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor:
+                            snapshot.services.redis.status === 'running'
+                              ? 'var(--accent-2, #5fa8a0)'
+                              : 'var(--text-muted)',
+                          boxShadow:
+                            snapshot.services.redis.status === 'running'
+                              ? '0 0 6px var(--accent-2)'
+                              : 'none',
+                        }}
+                      />
+                      <strong style={{ fontSize: '0.92rem' }}>Redis Cache & Queues</strong>
+                    </div>
+                    <span
+                      className="mono"
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        background:
+                          snapshot.services.redis.status === 'running'
+                            ? 'rgba(95, 168, 160, 0.1)'
+                            : 'rgba(255, 255, 255, 0.05)',
+                        color:
+                          snapshot.services.redis.status === 'running'
+                            ? 'var(--accent-2)'
+                            : 'var(--text-muted)',
+                        border: '1px solid currentColor',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {snapshot.services.redis.status}
+                    </span>
+                  </div>
+
+                  {/* RAM and CPU Stat Pair */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div style={{ background: 'var(--surface)', padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>RAM (Allocated RSS)</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent-2)', marginTop: '2px' }}>
+                        {snapshot.services.redis.memoryFormatted || '0 B'}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {snapshot.services.redis.memoryPercent}% of Host RAM
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'var(--surface)', padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>CPU Load</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent)', marginTop: '2px' }}>
+                        {snapshot.services.redis.cpuPercent}%
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        Redis Daemon
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sub details */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '8px' }}>
+                    <span>Connected Clients: <strong style={{ color: 'var(--text-primary)' }}>{snapshot.services.redis.details?.connectedClients ?? '0'}</strong></span>
+                    <span>Peak Memory: <strong style={{ color: 'var(--text-primary)' }}>{snapshot.services.redis.details?.usedMemoryPeakFormatted || 'N/A'}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Dedicated Services (Postgres & Redis) */}
+      {(activeTab as any) === 'services' && snapshot && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {snapshot.services ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+              {/* PostgreSQL Detailed Card */}
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(95, 168, 160, 0.1)', color: 'var(--accent-2)' }}>
+                      <Database size={20} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>PostgreSQL Database Engine</h3>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        Host Relational Storage & Prisma Backend
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className="mono"
+                    style={{
+                      fontSize: '0.72rem',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      background: 'rgba(95, 168, 160, 0.12)',
+                      color: 'var(--accent-2)',
+                      border: '1px solid var(--accent-2)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {snapshot.services.postgres.status}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ background: '#12161c', padding: '12px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>RAM Consumption</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent-2)', marginTop: '4px' }}>
+                      {snapshot.services.postgres.memoryFormatted}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {snapshot.services.postgres.memoryPercent}% of Total Host RAM
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#12161c', padding: '12px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>CPU Consumption</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent)', marginTop: '4px' }}>
+                      {snapshot.services.postgres.cpuPercent}%
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {snapshot.services.postgres.details?.processCount || 1} Worker Processes
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.82rem', borderTop: '1px solid var(--border)', paddingTop: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Database Footprint on Disk:</span>
+                    <strong style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{snapshot.services.postgres.details?.databaseSizeFormatted || 'N/A'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Active Database Connections:</span>
+                    <strong style={{ fontFamily: 'monospace', color: 'var(--accent-2)' }}>{snapshot.services.postgres.details?.activeConnections ?? '1'}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Redis Detailed Card */}
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ padding: '8px', borderRadius: '6px', background: 'rgba(232, 163, 61, 0.1)', color: 'var(--accent)' }}>
+                      <Zap size={20} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0 }}>Redis Cache & Message Broker</h3>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                        In-memory Key-Value & Background Worker Queue
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className="mono"
+                    style={{
+                      fontSize: '0.72rem',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      background: 'rgba(232, 163, 61, 0.12)',
+                      color: 'var(--accent)',
+                      border: '1px solid var(--accent)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {snapshot.services.redis.status}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ background: '#12161c', padding: '12px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>RAM Consumption</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent-2)', marginTop: '4px' }}>
+                      {snapshot.services.redis.memoryFormatted}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {snapshot.services.redis.memoryPercent}% of Total Host RAM
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#12161c', padding: '12px 14px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>CPU Consumption</div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: 'monospace', color: 'var(--accent)', marginTop: '4px' }}>
+                      {snapshot.services.redis.cpuPercent}%
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Single-threaded Event Loop
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.82rem', borderTop: '1px solid var(--border)', paddingTop: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Peak Memory Recorded:</span>
+                    <strong style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>{snapshot.services.redis.details?.usedMemoryPeakFormatted || 'N/A'}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Connected Client Sockets:</span>
+                    <strong style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>{snapshot.services.redis.details?.connectedClients ?? '0'}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="panel" style={{ textAlign: 'center', padding: '40px' }}>
+              <div className="mono" style={{ color: 'var(--text-muted)' }}>Collecting services metrics...</div>
             </div>
           )}
         </div>
