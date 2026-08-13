@@ -405,14 +405,7 @@ export const SystemMonitor: React.FC = () => {
 
       {/* Primary 4 Metric Gauges */}
       {snapshot ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '16px',
-            marginBottom: '28px',
-          }}
-        >
+        <div className="stats-row" style={{ marginBottom: '24px' }}>
           {/* 1. CPU Overall Load */}
           <div
             className="tile-card"
@@ -420,7 +413,7 @@ export const SystemMonitor: React.FC = () => {
               background: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: '8px',
-              padding: '18px 20px',
+              padding: '14px 16px',
               position: 'relative',
             }}
           >
@@ -747,11 +740,17 @@ export const SystemMonitor: React.FC = () => {
 
       {/* Tabs navigation for deep dive */}
       <div
+        className="system-tabs-bar"
         style={{
           display: 'flex',
           gap: '8px',
           borderBottom: '1px solid var(--border)',
           marginBottom: '20px',
+          overflowX: 'auto',
+          whiteSpace: 'nowrap',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          paddingBottom: '2px',
         }}
       >
         <button
@@ -768,6 +767,7 @@ export const SystemMonitor: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            flexShrink: 0,
           }}
         >
           <Activity size={15} /> All Cores & Storage
@@ -787,6 +787,7 @@ export const SystemMonitor: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            flexShrink: 0,
           }}
         >
           <Layers size={15} /> Memory & Process Heap
@@ -806,6 +807,7 @@ export const SystemMonitor: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            flexShrink: 0,
           }}
         >
           <Server size={15} /> Hardware & Network Specs
